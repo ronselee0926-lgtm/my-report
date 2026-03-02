@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import html2canvas from 'html2canvas';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
   ResponsiveContainer, RadarChart, Radar, PolarGrid, PolarAngleAxis,
@@ -96,14 +95,13 @@ function initMods() {
 }
 
 // ─── HTML Export ───
-// ─── HTML Export ───
-function genHTML(title, subtitle, modules, chartImages = {}) {   // ← 加 chartImages
+function genHTML(title, subtitle, modules) {
   const esc = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
   const modHTML = (m, i) => {
     let c = '';
     switch(m.type) {
-      case 'text': /* 不变 */ c=`<p style="font-size:15px;line-height:1.9;color:#3f3f46;">${esc(m.data.content)}</p>`; break;
-      case 'kpi': /* 不变 */ {
+      case 'text': c=`<p style="font-size:15px;line-height:1.9;color:#3f3f46;">${esc(m.data.content)}</p>`; break;
+      case 'kpi': {
         const cols = m.config?.cols||3;
         c=`<div style="display:grid;grid-template-columns:repeat(${Math.min(cols,4)},1fr);gap:24px;">`;
         m.data.items.forEach(it=>{
@@ -113,14 +111,14 @@ function genHTML(title, subtitle, modules, chartImages = {}) {   // ← 加 char
         });
         c+=`</div>`; break;
       }
-      case 'table': /* 不变 */ {
+      case 'table': {
         c=`<table><thead><tr>`;
         m.data.headers.forEach(h=>{c+=`<th>${esc(h)}</th>`;});
         c+=`</tr></thead><tbody>`;
         m.data.rows.forEach(r=>{c+=`<tr>`;r.cells.forEach(cell=>{c+=`<td>${esc(cell)}</td>`;});c+=`</tr>`;});
         c+=`</tbody></table>`; break;
       }
-      case 'chart': /* 不变 */ {
+      case 'chart': {
         const mx = Math.max(...m.data.items.flatMap(it=>it.values),1);
         c+=`<div style="margin-bottom:12px;display:flex;gap:16px;">`; m.data.series.forEach(s=>{c+=`<span style="font-size:12px;color:${s.color};display:flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;background:${s.color};border-radius:2px;display:inline-block;"></span>${esc(s.name)}</span>`;}); c+=`</div>`;
         m.data.items.forEach(it=>{
@@ -133,7 +131,7 @@ function genHTML(title, subtitle, modules, chartImages = {}) {   // ← 加 char
         });
         break;
       }
-      case 'funnel': /* 不变 */ {
+      case 'funnel': {
         const mx = Math.max(...m.data.items.flatMap(it=>[it.cur,it.prev]),1);
         c+=`<div style="text-align:right;margin-bottom:16px;font-size:11px;color:#a1a1aa;"><span style="display:inline-flex;align-items:center;gap:4px;margin-right:16px;"><span style="width:10px;height:8px;background:#1d4ed8;border-radius:2px;display:inline-block;"></span>本月</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:8px;background:#d4d4d8;border-radius:2px;display:inline-block;"></span>上月</span></div>`;
         m.data.items.forEach((it,idx)=>{
@@ -147,7 +145,7 @@ function genHTML(title, subtitle, modules, chartImages = {}) {   // ← 加 char
         });
         break;
       }
-      case 'comparison': /* 不变 */ {
+      case 'comparison': {
         c=`<table><thead><tr><th>指标</th><th>干预措施</th><th>优化前</th><th>优化后</th><th>改善</th></tr></thead><tbody>`;
         m.data.items.forEach(it=>{
           const imp = it.before?((it.before-it.after)/it.before*100).toFixed(1):'—';
@@ -155,19 +153,14 @@ function genHTML(title, subtitle, modules, chartImages = {}) {   // ← 加 char
         });
         c+=`</tbody></table>`; break;
       }
-      case 'list': /* 不变 */ {
+      case 'list': {
         m.data.items.forEach(it=>{
           c+=`<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:12px;font-size:15px;line-height:1.7;color:#3f3f46;"><span style="width:5px;height:5px;border-radius:50%;background:#18181b;flex-shrink:0;margin-top:9px;"></span><span>${it.bold?`<strong style="color:#18181b;">${esc(it.bold)}</strong>`:''}${esc(it.text)}</span></div>`;
         });
         break;
       }
-      // ========== 这里是关键改动 ==========
       default: {
-        // 如果有截图，优先用图片
-        if (chartImages[m.id]) {
-          c += `<img src="${chartImages[m.id]}" style="max-width:100%;height:auto;margin-bottom:16px;" />`;
-        }
-        // 图片下方仍附加数据表格作为备份
+        // line, radar, bubble → data table fallback
         if(m.type==='line'){
           c+=`<table><thead><tr><th>日期</th>`;m.data.series.forEach(s=>{c+=`<th>${esc(s.name)}</th>`;});c+=`</tr></thead><tbody>`;m.data.points.forEach(pt=>{c+=`<tr><td>${esc(pt.x)}</td>`;pt.values.forEach(v=>{c+=`<td>${v}</td>`;});c+=`</tr>`;});c+=`</tbody></table>`;
         } else if(m.type==='radar'){
@@ -176,11 +169,10 @@ function genHTML(title, subtitle, modules, chartImages = {}) {   // ← 加 char
           c+=`<table><thead><tr><th>组</th><th>标签</th><th>${esc(m.config?.x)}</th><th>${esc(m.config?.y)}</th><th>${esc(m.config?.z)}</th></tr></thead><tbody>`;m.data.groups.forEach(g=>{g.pts.forEach(p=>{c+=`<tr><td>${esc(g.name)}</td><td>${esc(p.label)}</td><td>${p.x}</td><td>${p.y}</td><td>${p.z}</td></tr>`;});});c+=`</tbody></table>`;
         }
       }
-      // ====================================
     }
     return `<section style="margin-bottom:48px;page-break-inside:avoid;"><div style="display:flex;align-items:baseline;gap:12px;margin-bottom:18px;"><span style="font-family:monospace;font-size:12px;color:#d4d4d8;">${String(i+1).padStart(2,'0')}</span><div><h2 style="font-size:17px;font-weight:600;color:#18181b;margin:0;">${esc(m.title)}</h2>${m.subtitle?`<p style="font-size:13px;color:#a1a1aa;margin:4px 0 0;">${esc(m.subtitle)}</p>`:''}</div></div><div style="padding-left:32px;">${c}</div></section>`;
   };
-  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,'Helvetica Neue','PingFang SC',sans-serif;color:#27272a;background:#fff;max-width:820px;margin:0 auto;padding:48px 40px}@media print{body{padding:20px}section{page-break-inside:avoid}}table{border-collapse:collapse;width:100%;margin-top:8px;font-size:13px}th,td{padding:10px 14px;text-align:left;border-bottom:1px solid #e4e4e7}th{font-weight:600;color:#52525b;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #d4d4d8}img{max-width:100%;height:auto}@media(max-width:600px){body{padding:20px 16px}}</style></head><body><header style="margin-bottom:48px;padding-bottom:28px;border-bottom:1px solid #e4e4e7;"><h1 style="font-size:24px;font-weight:700;color:#18181b;letter-spacing:-0.5px;">${esc(title)}</h1>${subtitle?`<p style="font-size:14px;color:#a1a1aa;margin-top:8px;">${esc(subtitle)}</p>`:''}<p style="font-size:11px;color:#d4d4d8;margin-top:14px;font-family:monospace;">${new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'})}</p></header>${modules.map((m,i)=>modHTML(m,i)).join('')}<footer style="margin-top:40px;padding-top:20px;border-top:1px solid #e4e4e7;text-align:center;font-size:11px;color:#d4d4d8;">Generated ${new Date().toLocaleString('zh-CN')}</footer></body></html>`;
+  return `<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:-apple-system,'Helvetica Neue','PingFang SC',sans-serif;color:#27272a;background:#fff;max-width:820px;margin:0 auto;padding:48px 40px}@media print{body{padding:20px}section{page-break-inside:avoid}}table{border-collapse:collapse;width:100%;margin-top:8px;font-size:13px}th,td{padding:10px 14px;text-align:left;border-bottom:1px solid #e4e4e7}th{font-weight:600;color:#52525b;font-size:11px;text-transform:uppercase;letter-spacing:0.3px;border-bottom:2px solid #d4d4d8}@media(max-width:600px){body{padding:20px 16px}}</style></head><body><header style="margin-bottom:48px;padding-bottom:28px;border-bottom:1px solid #e4e4e7;"><h1 style="font-size:24px;font-weight:700;color:#18181b;letter-spacing:-0.5px;">${esc(title)}</h1>${subtitle?`<p style="font-size:14px;color:#a1a1aa;margin-top:8px;">${esc(subtitle)}</p>`:''}<p style="font-size:11px;color:#d4d4d8;margin-top:14px;font-family:monospace;">${new Date().toLocaleDateString('zh-CN',{year:'numeric',month:'long',day:'numeric'})}</p></header>${modules.map((m,i)=>modHTML(m,i)).join('')}<footer style="margin-top:40px;padding-top:20px;border-top:1px solid #e4e4e7;text-align:center;font-size:11px;color:#d4d4d8;">Generated ${new Date().toLocaleString('zh-CN')}</footer></body></html>`;
 }
 
 const I = "w-full px-3 py-2 text-sm border border-zinc-200 rounded focus:outline-none focus:border-zinc-400 bg-white";
@@ -207,38 +199,14 @@ export default function ReportBuilder() {
 
   const flash = (msg) => { setToast(msg); setTimeout(() => setToast(''), 2500); };
 
- const dlHTML = async () => {
-  flash('正在生成图表截图...');
-
-  // 1. 截取所有 Recharts 图表
-  const chartImages = {};
-  for (const mod of modules) {
-    if (['line', 'radar', 'bubble', 'comparison'].includes(mod.type)) {
-      const el = document.querySelector(`[data-module-id="${mod.id}"] .recharts-wrapper`);
-      if (el) {
-        try {
-          const canvas = await html2canvas(el, { backgroundColor: '#ffffff', scale: 2 });
-          chartImages[mod.id] = canvas.toDataURL('image/png');
-        } catch (e) {
-          console.error('截图失败:', mod.title, e);
-        }
-      }
-    }
-  }
-
-  // 2. 生成 HTML（传入截图数据）
-  const html = genHTML(title, subtitle, modules, chartImages);
-  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `${title || 'report'}.html`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  flash('✓ 已下载 HTML（含图表）');
-};
+  const dlHTML = () => {
+    const html = genHTML(title, subtitle, modules);
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = `${title||'report'}.html`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
+    flash('✓ 已下载 HTML');
+  };
 
   const dlPDF = () => {
     const html = genHTML(title, subtitle, modules);
@@ -419,11 +387,7 @@ export default function ReportBuilder() {
             {modules.map((mod, idx) => {
               const isSelected = sel === mod.id;
               return (
-               <div
-  key={mod.id}
-  data-module-id={mod.id}                    // ← 加这一行
-  className={`group relative mb-10 rounded transition-all ${isSelected ? 'ring-2 ring-blue-400 ring-offset-4' : ''}`}
->
+                <div key={mod.id} className={`group relative mb-10 rounded transition-all ${isSelected ? 'ring-2 ring-blue-400 ring-offset-4' : ''}`}>
                   {/* Toolbar */}
                   <div className={`absolute -top-3 right-0 flex items-center gap-0.5 bg-white border border-zinc-200 rounded shadow-sm px-1 py-0.5 transition-opacity z-10 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>
                     <button onClick={() => mv(mod.id, -1)} className="p-1 text-zinc-400 hover:text-zinc-700 rounded" title="上移"><ChevronUp size={14}/></button>
