@@ -378,7 +378,7 @@ export default function ReportBuilder() {
           <div className="max-w-3xl mx-auto px-4 sm:px-8 py-10">
             {/* Title */}
             <div className="mb-12 pb-6 border-b border-zinc-200">
-              <h1 className="text-2xl font-bold text-zinc-900 tracking-tight">{title}</h1>
+              <input   className="text-2xl font-bold text-zinc-900 tracking-tight bg-transparent outline-none w-full"   value={title}   onChange={e => setTitle(e.target.value)}   placeholder="输入报告标题..." />
               <input className="text-sm text-zinc-400 mt-2 bg-transparent outline-none w-full" value={subtitle} onChange={e => setSubtitle(e.target.value)} placeholder="添加副标题..." />
               <div className="text-xs text-zinc-300 mt-3 font-mono">{new Date().toLocaleDateString('zh-CN', { year:'numeric', month:'long', day:'numeric' })}</div>
             </div>
