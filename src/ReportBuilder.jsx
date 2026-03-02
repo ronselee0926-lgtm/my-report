@@ -185,7 +185,13 @@ const BubbleTip = ({active,payload}) => {
 };
 
 export default function ReportBuilder() {
-  const [title, setTitle] = useState('充电业务月度运营报告');
+<h1
+  contentEditable
+  suppressContentEditableWarning
+  className="text-4xl font-bold text-gray-900 outline-none focus:ring-2 focus:ring-blue-300 rounded px-1"
+>
+  充电业务月度运营报告
+</h1>
   const [subtitle, setSubtitle] = useState('数据驱动的体验优化与品牌提升专项分析');
   const [modules, setModules] = useState(initMods);
   const [sel, setSel] = useState(null);
