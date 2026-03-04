@@ -201,7 +201,9 @@ function DraggableModule({ mod, isSelected, onSelect, onMoveUp, onMoveDown, onDe
 }
 
 const API_CONFIG = {
-  baseURL: 'http://api.openai.rnd.huawei.com',
+  baseURL: typeof window !== 'undefined' && window.location.hostname === 'localhost' 
+    ? 'http://api.openai.rnd.huawei.com'
+    : '/api/proxy',
   model: 'qwen3-30b-a3b-instruct-2507',
   getApiKey: () => localStorage.getItem('deepseek_api_key') || 'sk-1234'
 };
