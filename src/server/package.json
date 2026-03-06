@@ -1,0 +1,14 @@
+{
+  "name": "report-api-server",
+  "version": "1.0.0",
+  "description": "报告数据API服务",
+  "main": "api.cjs",
+  "scripts": {
+    "start": "node api.cjs",
+    "dev": "node api.cjs"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  }
+}
