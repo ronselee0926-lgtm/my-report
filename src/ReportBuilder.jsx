@@ -14,7 +14,7 @@ import {
   ArrowLeftRight, List, Filter, Activity, Circle, Gauge, Upload, Sparkles,
   PieChart, ListOrdered, Gauge as ProgressIcon, GripVertical, Folder, FolderPlus,
   RefreshCw, Cloud, CloudOff, Save, Columns, Copy, Image, FileSpreadsheet, Paperclip,
-  CheckSquare, Check, Map as MapIcon
+  CheckSquare, Check, Map as MapIcon, FileJson
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { fetchReports, fetchReport, createReport, updateReport, deleteReport, checkHealth, fetchFolders, createFolder, updateFolder, deleteFolder } from './api/reportApi.js';
@@ -6418,6 +6418,26 @@ export default function ReportBuilder() {
             <button onClick={async () => { await saveToAPI(); flash('✓ 报告已同步到服务器'); }} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded transition-colors"><Save size={13}/>保存</button>
             <button onClick={dlHTML} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded transition-colors"><Download size={13}/>HTML</button>
             <button onClick={dlPDF} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-white bg-zinc-800 hover:bg-zinc-700 rounded transition-colors"><Download size={13}/>PDF</button>
+            <button onClick={saveReportAsJSON} className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded transition-colors"><FileJson size={13}/>导出JSON</button>
+            <label className="flex items-center gap-1 px-3 py-1.5 text-xs font-medium text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded transition-colors cursor-pointer">
+              <Upload size={13}/>导入JSON
+              <input type="file" accept=".json" className="hidden" onChange={(e) => {
+                const file = e.target.files[0];
+                if (file) {
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    try {
+                      const jsonData = JSON.parse(event.target.result);
+                      loadReportFromJSON(jsonData);
+                    } catch (error) {
+                      flash('✗ JSON 文件解析失败');
+                    }
+                  };
+                  reader.readAsText(file);
+                }
+                e.target.value = '';
+              }} />
+            </label>
             <button 
               onClick={toggleBatchMode} 
               className={`flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded transition-colors ${isBatchMode ? 'bg-green-600 text-white' : 'text-zinc-600 bg-zinc-100 hover:bg-zinc-200'}`}
